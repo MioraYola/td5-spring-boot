@@ -17,4 +17,8 @@ public class IngredientService {
     public List<IngredientDTO> getAllIngredients() {
         return ingredientRepository.findAll();
     }
+
+    public IngredientDTO findById(int id) {
+        return ingredientRepository.findById(id);
+    }
 }

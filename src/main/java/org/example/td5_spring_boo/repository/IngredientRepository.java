@@ -30,4 +30,20 @@ public class IngredientRepository {
                 )
         );
     }
+
+    public IngredientDTO findById(int id) {
+        String sql = "SELECT id, name, price, category FROM ingredient WHERE id = ?";
+
+        return jdbcTemplate.query(sql, rs -> {
+            if (rs.next()) {
+                return new IngredientDTO(
+                        rs.getInt("id"),
+                        rs.getString("name"),
+                        CategoryEnum.valueOf(rs.getString("category").toLowerCase()),
+                        rs.getDouble("price")
+                );
+            }
+            return null;
+        }, id);
+    }
 }
