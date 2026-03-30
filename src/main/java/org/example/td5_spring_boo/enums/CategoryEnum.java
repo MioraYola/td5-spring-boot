@@ -1,4 +1,5 @@
 package org.example.td5_spring_boo.enums;
 
-public class CategoryEnum {
+public enum CategoryEnum {
+    vegetable, animal, marine, dairy, other
 }

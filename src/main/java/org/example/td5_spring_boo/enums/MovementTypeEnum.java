@@ -1,4 +1,5 @@
 package org.example.td5_spring_boo.enums;
 
-public class MovementTypeEnum {
+public enum MovementTypeEnum {
+    in, out
 }

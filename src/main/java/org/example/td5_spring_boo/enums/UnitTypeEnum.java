@@ -1,4 +1,5 @@
 package org.example.td5_spring_boo.enums;
 
-public class UnitTypeEnum {
+public enum UnitTypeEnum {
+    pcs, kg, l
 }
