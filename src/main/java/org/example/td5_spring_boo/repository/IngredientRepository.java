@@ -1,12 +1,16 @@
 package org.example.td5_spring_boo.repository;
 
 import org.example.td5_spring_boo.DTO.IngredientDTO;
+import org.example.td5_spring_boo.DTO.StockValueDTO;
 import org.example.td5_spring_boo.entity.Ingredient;
 import org.example.td5_spring_boo.enums.CategoryEnum;
+import org.example.td5_spring_boo.enums.UnitTypeEnum;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.List;
 import java.util.Locale;
 
@@ -45,5 +49,28 @@ public class IngredientRepository {
             }
             return null;
         }, id);
+    }
+
+    public StockValueDTO getStockValueAt(int ingredientId, Instant at, UnitTypeEnum unit) {
+        String sql = """
+            SELECT SUM(quantity) AS total_quantity
+            FROM stockMovement
+            WHERE id_ingredient = ?
+              AND creation_datetime <= ?
+              AND unit = ?
+        """;
+
+        Double quantity = jdbcTemplate.query(sql, rs -> {
+            if (rs.next()) {
+                return rs.getDouble("total_quantity");
+            }
+            return null;
+        }, ingredientId, Timestamp.from(at), unit.name());
+
+        if (quantity == null) {
+            return null; // ingrédient non trouvé ou pas de mouvement avant 'at'
+        }
+
+        return new StockValueDTO(unit, quantity);
     }
 }
