@@ -2,53 +2,73 @@ package org.example.td5_spring_boo.repository;
 
 import org.example.td5_spring_boo.DTO.IngredientDTO;
 import org.example.td5_spring_boo.DTO.StockValueDTO;
-import org.example.td5_spring_boo.entity.Ingredient;
 import org.example.td5_spring_boo.enums.CategoryEnum;
 import org.example.td5_spring_boo.enums.UnitTypeEnum;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
-import java.sql.Timestamp;
+import javax.sql.DataSource;
+import java.sql.*;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 @Repository
 public class IngredientRepository {
-    private final JdbcTemplate jdbcTemplate;
 
-    public IngredientRepository(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
+    private final DataSource dataSource;
+
+    public IngredientRepository(DataSource dataSource) {
+        this.dataSource = dataSource;
     }
 
     public List<IngredientDTO> findAll() {
         String sql = "SELECT id, name, price, category FROM ingredient ORDER BY id";
+        List<IngredientDTO> ingredients = new ArrayList<>();
 
-        return jdbcTemplate.query(sql, (rs, rowNum) ->
-                new IngredientDTO(
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                ingredients.add(new IngredientDTO(
                         rs.getInt("id"),
                         rs.getString("name"),
                         CategoryEnum.valueOf(rs.getString("category").toLowerCase()),
                         rs.getDouble("price")
-                )
-        );
+                ));
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+
+        return ingredients;
     }
 
     public IngredientDTO findById(int id) {
         String sql = "SELECT id, name, price, category FROM ingredient WHERE id = ?";
 
-        return jdbcTemplate.query(sql, rs -> {
-            if (rs.next()) {
-                return new IngredientDTO(
-                        rs.getInt("id"),
-                        rs.getString("name"),
-                        CategoryEnum.valueOf(rs.getString("category").toLowerCase()),
-                        rs.getDouble("price")
-                );
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, id);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return new IngredientDTO(
+                            rs.getInt("id"),
+                            rs.getString("name"),
+                            CategoryEnum.valueOf(rs.getString("category").toLowerCase()),
+                            rs.getDouble("price")
+                    );
+                }
             }
-            return null;
-        }, id);
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+
+        return null;
     }
 
     public StockValueDTO getStockValueAt(int ingredientId, Instant at, UnitTypeEnum unit) {
@@ -60,15 +80,27 @@ public class IngredientRepository {
               AND unit = ?
         """;
 
-        Double quantity = jdbcTemplate.query(sql, rs -> {
-            if (rs.next()) {
-                return rs.getDouble("total_quantity");
+        Double quantity = null;
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, ingredientId);
+            stmt.setTimestamp(2, Timestamp.from(at));
+            stmt.setString(3, unit.name());
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    quantity = rs.getDouble("total_quantity");
+                }
             }
-            return null;
-        }, ingredientId, Timestamp.from(at), unit.name());
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
 
         if (quantity == null) {
-            return null; // ingrédient non trouvé ou pas de mouvement avant 'at'
+            return null; // pas de mouvement avant 'at' ou ingrédient non trouvé
         }
 
         return new StockValueDTO(unit, quantity);
