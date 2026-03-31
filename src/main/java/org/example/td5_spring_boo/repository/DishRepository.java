@@ -41,4 +41,44 @@ public class DishRepository {
             return new DishDTO(dishId, name, price, ingredients);
         });
     }
+
+    public boolean existsDishById(int id) {
+        String sql = "SELECT COUNT(*) FROM dish WHERE id = ?";
+        Integer count = jdbcTemplate.queryForObject(sql, Integer.class, id);
+        return count != null && count > 0;
+    }
+
+    public List<Integer> findIngredientIdsByDish(int dishId) {
+        String sql = "SELECT id_ingredient FROM dishIngredient WHERE id_dish = ?";
+
+        return jdbcTemplate.query(sql,
+                (rs, rowNum) -> rs.getInt("id_ingredient"),
+                dishId
+        );
+    }
+
+    public boolean existsIngredientById(int id) {
+        String sql = "SELECT COUNT(*) FROM ingredient WHERE id = ?";
+        Integer count = jdbcTemplate.queryForObject(sql, Integer.class, id);
+        return count != null && count > 0;
+    }
+
+    public void addIngredientToDish(int dishId, int ingredientId) {
+        String sql = """
+        INSERT INTO dishIngredient(id_dish, id_ingredient)
+        VALUES (?, ?)
+        ON CONFLICT DO NOTHING
+    """;
+
+        jdbcTemplate.update(sql, dishId, ingredientId);
+    }
+
+    public void removeIngredientFromDish(int dishId, int ingredientId) {
+        String sql = """
+        DELETE FROM dishIngredient
+        WHERE id_dish = ? AND id_ingredient = ?
+    """;
+
+        jdbcTemplate.update(sql, dishId, ingredientId);
+    }
 }

@@ -1,9 +1,10 @@
 package org.example.td5_spring_boo.controller;
 
 import org.example.td5_spring_boo.DTO.DishDTO;
+import org.example.td5_spring_boo.DTO.IngredientDTO;
 import org.example.td5_spring_boo.service.DishService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -18,5 +19,30 @@ public class DishController {
     @GetMapping("/dishes")
     public List<DishDTO> getDishes() {
         return dishService.getAllDishes();
+    }
+
+    @PutMapping("/dishes/{id}/ingredients")
+    public ResponseEntity<?> updateDishIngredients(
+            @PathVariable int id,
+            @RequestBody(required = false) List<IngredientDTO> ingredients) {
+
+        try {
+            dishService.updateDishIngredients(id, ingredients);
+            return ResponseEntity.ok("Updated successfully");
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(e.getMessage());
+
+        } catch (RuntimeException e) {
+            if (e.getMessage().contains("not found")) {
+                return ResponseEntity
+                        .status(404)
+                        .body("Dish.id=" + id + " is not found");
+            }
+
+            return ResponseEntity.internalServerError().body(e.getMessage());
+        }
     }
 }
