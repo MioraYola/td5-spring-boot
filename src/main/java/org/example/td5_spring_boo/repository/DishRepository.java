@@ -5,6 +5,7 @@ import org.example.td5_spring_boo.DTO.DishDTO;
 import org.example.td5_spring_boo.DTO.IngredientDTO;
 import org.example.td5_spring_boo.entity.Dish;
 import org.example.td5_spring_boo.enums.CategoryEnum;
+import org.example.td5_spring_boo.enums.DishTypeEnum;
 import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
@@ -239,4 +240,66 @@ public class DishRepository {
 
         return savedDishes;
     }
+
+    public List<Dish> findDishes(Double priceUnder, Double priceOver, String name) {
+        List<Dish> dishes = new ArrayList<>();
+
+        StringBuilder sql = new StringBuilder("SELECT id, name, dish_type, price FROM dish");
+        List<String> conditions = new ArrayList<>();
+        List<Object> params = new ArrayList<>();
+
+        if (priceUnder != null) {
+            conditions.add("price < ?");
+            params.add(priceUnder);
+        }
+        if (priceOver != null) {
+            conditions.add("price > ?");
+            params.add(priceOver);
+        }
+        if (name != null && !name.isEmpty()) {
+            conditions.add("name ILIKE ?");
+            params.add("%" + name + "%");
+        }
+
+        if (!conditions.isEmpty()) {
+            sql.append(" WHERE ").append(String.join(" AND ", conditions));
+        }
+
+        sql.append(" ORDER BY id");
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
+
+            for (int i = 0; i < params.size(); i++) {
+                Object param = params.get(i);
+                if (param instanceof Double d) stmt.setDouble(i + 1, d);
+                else if (param instanceof String s) stmt.setString(i + 1, s);
+            }
+
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                dishes.add(new Dish(
+                        rs.getInt("id"),
+                        rs.getString("name"),
+                        DishTypeEnum.valueOf(rs.getString("dish_type")),
+                        rs.getDouble("price")
+                ));
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+
+        return dishes;
+    }
+
+    public List<IngredientDTO> findIngredientsByDishId(int dishId) {
+        try (Connection conn = dataSource.getConnection()) {
+            return findIngredientsByDish(conn, dishId); // utilise la méthode privée existante
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+
 }

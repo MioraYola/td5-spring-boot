@@ -25,8 +25,25 @@ public class DishController {
     }
 
     @GetMapping("/dishes")
-    public List<DishDTO> getDishes() {
-        return dishService.getAllDishes();
+    public ResponseEntity<List<DishDTO>> getDishes(
+            @RequestParam(required = false) Double priceUnder,
+            @RequestParam(required = false) Double priceOver,
+            @RequestParam(required = false) String name
+    ) {
+        // Utilise ton repository filtré
+        List<Dish> filteredDishes = dishRepository.findDishes(priceUnder, priceOver, name);
+
+        // Convertir Dish -> DishDTO pour la réponse
+        List<DishDTO> dtoList = filteredDishes.stream()
+                .map(dish -> new DishDTO(
+                        dish.id(),
+                        dish.name(),
+                        dish.price(),
+                        dishRepository.findIngredientsByDishId(dish.id()) // ou similaire
+                ))
+                .toList();
+
+        return ResponseEntity.ok(dtoList);
     }
 
     @PutMapping("/dishes/{id}/ingredients")
@@ -66,4 +83,6 @@ public class DishController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Unexpected error: " + e.getMessage());
         }
     }
+
+
 }
