@@ -3,3 +3,14 @@ info:
   title: Ingredient API
   version: 1.0.0
   description: API de gestion d'ingredients
+paths:
+  /ingredients:
+    get:
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: array
+
