@@ -40,6 +40,45 @@ paths:
                 type: string
                 example: "Ingredient.id=1 is not found"
 
+  /ingredients/{id}/stock:
+    get:
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+        - in: query
+          name: at
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: unit
+          required: true
+          schema:
+            type: string
+            enum: [pcs, kg, l]
+      responses:
+        '200':
+          description: Stock value retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IngredientStock'
+        '400':
+          description: Missing query parameters
+          content:
+            text/plain:
+              schema:
+                type: string
+        '404':
+          description: Ingredient not found
+          content:
+            text/plain:
+              schema:
+                type: string
+
 components:
   schemas:
     Ingredient:
@@ -52,5 +91,14 @@ components:
         category:
           type: string
         price:
+          type: number
+          format: double
+    IngredientStock:
+      type: object
+      properties:
+        unit:
+          type: string
+          enum: [pcs, kg, l ]
+        value:
           type: number
           format: double
