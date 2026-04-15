@@ -89,6 +89,41 @@ paths:
                 type: array
                 items:
                     $ref: '#/components/schemas/Dish'
+  /dishes/{id}/ingredients:
+    put:
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/Ingredient'
+      responses:
+        '200':
+          description: Ingredients successfully associated/dissociated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dish'
+        '400':
+          description: Missing request body
+          content:
+            text/plain:
+              schema:
+                type: string
+        '404':
+          description: Dish not found
+          content:
+            text/plain:
+              schema:
+                type: string
 components:
   schemas:
     Ingredient:
