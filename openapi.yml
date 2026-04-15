@@ -13,4 +13,44 @@ paths:
             application/json:
               schema:
                 type: array
+                items:
+                  $ref: '#/components/schemas/Ingredient'
 
+
+  /ingredients/{id}:
+    get:
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: Ingredient found by id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ingredient'
+        '404':
+          description: Ingredient not found
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Ingredient.id=1 is not found"
+
+components:
+  schemas:
+    Ingredient:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        category:
+          type: string
+        price:
+          type: number
+          format: double
